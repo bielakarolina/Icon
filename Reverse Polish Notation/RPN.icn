@@ -1,0 +1,72 @@
+procedure main()
+	while w := read() do {
+		w := ONP(w)
+		write(w)
+		every v := gen(*(w**&lcase)) do write(v, "  ", val(w, v))
+		if not(val(w, gen(*(w ** &lcase))) = 0) then write("TAK") else write("NIE")
+	}
+	while write(ONP(read()))
+	#while wyr := read() do
+	#	if check(wyr)==0 then write("OK") else write("ERROR")
+end
+
+
+# W::= S | S|W
+# S::= C | C&S
+# C::= I | I>C
+# I::=a|b|c|...|z|(W)
+
+procedure is_correct(w)
+	if w ? {W() & pos(0)} then return "1" else return "0"
+end
+
+procedure check(e)
+	if e? {W() & pos(0)} then return "1" else return "0"
+end
+
+procedure W()
+	suspend S() | (S() || ="|" || W())
+end
+
+procedure S()
+	suspend C() | (C() || ="&" || S())
+end
+
+procedure C()
+	suspend I() | (I() || =">" || C())
+end
+
+procedure I()
+	suspend =(!&lcase) | (="(" || W() || =")")
+end
+
+procedure ONP(w)
+	while w ?:= 2(="(", tab(bal(")")), pos(-1))
+	w ? every p := bal('>')
+	if \p then return ONP(w[1:p]) || ONP(w[p+1:0]) || w[p]
+	w ? every p := bal(!'&|')
+	if \p then return ONP(w[1:p]) || ONP(w[p+1:0]) || w[p]
+	if w[1] == "~" then return ONP(w[2:0]) || w[1]
+	return w
+end
+
+procedure val(w, arg)
+	w := map(w, cset(w) ** &lcase, arg)#zmieniamy wyrazenie na ciag bitowy
+	s := []
+	every e := !w do {
+		if e == !"01" then push(s, e)
+		else case e of {
+			"&" : push(s, iand(pop(s), pop(s)))
+			"|" : push(s, ior(pop(s), pop(s)))
+			">" : push(s, ior(pop(s), 1-pop(s)))
+			"^": push(s, ixor(pop(s), pop(s)))
+			"~" : push(s, 1-pop(s))
+		}
+	}
+	return pop(s)
+end
+
+procedure gen(n)
+	if n = 0 then suspend ""
+	else suspend !"01" || gen(n-1)
+end
