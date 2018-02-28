@@ -1,0 +1,170 @@
+
+# skorzystałam z kodu napisanego podczas zajęć labolatoryjnych
+procedure W()
+suspend S() | (S() || ="|" || W())
+end
+
+procedure S()
+suspend C() | (C() || ="&" || S())
+end
+
+procedure C()
+suspend K() | (K() || =">" || C())
+end
+procedure K()
+suspend I() | (I()||="^"|| K())
+end
+
+procedure I()# dopisana funcjonalnosc dla prawda/falsz i dla ~
+suspend (=(!&lcase | !"TF")) | (=" "||W()) | (="("||W()||=")") | (="~"||W())
+end
+
+procedure is_correct(e) #kod z laboratoriow
+if e? { W() & pos(0) } then return "1" else return "0"
+end
+
+procedure ONP(w) #kod z laboratoriow dostosowany do warunkow zadania
+while w?:= 2(="(", tab(bal(")")), pos(-1))
+w ? every p := bal(">")
+if \p then return ONP(w[1:p]) || ONP(w[p+1:0]) || w[p]
+w ? every p := bal("&|")
+if \p then return ONP(w[1:p]) || ONP(w[p+1:0]) || w[p]
+w ? every p := bal("^")
+if \p then return ONP(w[1:p]) || ONP(w[p+1:0]) || w[p]
+w ? every p := bal("~")
+if \p then return ONP(w[1:p]) || ONP(w[p+1:0]) || w[p]
+return w
+end
+
+procedure val(w, arg)
+w := map(w, cset(w) ** &lcase, arg)#zmieniamy wyrazenie na ciag bitowy
+s := []
+every e := !w do
+if e == !"01" then push(s, e)
+else case e of {
+	"F" : push(s,0)
+	"T"	: push(s,1)
+	"&" : push(s, iand(pop(s), pop(s)))
+	"|" : push(s, ior(pop(s), pop(s)))
+	">" : push(s, ior(pop(s), 1-pop(s)))
+	"^" : push(s, ixor(pop(s), pop(s)))
+	"~" : push(s, 1-pop(s))
+}
+
+return pop(s)
+end
+
+procedure gen(n)
+if n = 0 then suspend ""
+else suspend !"01" || gen(n-1)
+end
+
+procedure is_false(tab_val)
+every n := 1 to *tab_val do
+if tab_val[n] === 1 then return 0
+return 1
+end
+
+procedure is_true(tab_val)
+every n := 1 to *tab_val do
+if tab_val[n] === 0 then return 0
+return 1
+end
+
+
+procedure generator(n, w)
+#w := w**&lcase
+charset := (w ||"~^&|>")
+if n = 0 then suspend ""
+else suspend !charset || generator(n-1, w)
+end
+
+procedure is_equal(S1, S2)
+l := 0
+if *S1 == *S2 then #porownujemy dlugosci dwoch stringow
+every i := 1 to *S1 do
+if S1[i] == S2[i] then   #porownujemy lancuchy
+l +:= 1
+else break
+if l == *S1 then
+return "1"
+else return "0"
+end
+
+procedure del_spaces (S)
+res := ""
+every a := !S do
+if (a ~== " ") then res := res || a
+return res
+end
+
+procedure main()
+
+#write("Prosze podac wyrazenie do zredukowania")
+
+while phrase := read() do #czytamy wpisaną fraze
+{
+	phrase:=del_spaces(phrase) # pomijamy białe znaki
+	if phrase == 'q' then break #wychodzimy z programu
+
+	check_correct := is_correct(phrase)# pierwszy stopien redukcji, sprawdzamy czy wyrazenie jest poprawne
+
+	if check_correct == "0" then
+	write("ERROR")
+	else
+	{
+		ONP_phrase := ONP(phrase) #zamiana na odwrotna notacje polska
+
+		tab_val := []
+		every v := gen(*(ONP_phrase**&lcase)) do
+		{
+			put(tab_val, v)
+			put(tab_val, val(ONP_phrase,v)) #zamieniamy na odwrotna notacje a nastepnie na
+			}														#ciag binarny
+
+
+			if is_true(tab_val)==1 then write("T") else
+			{
+				if is_false(tab_val)==1 then write("F") else
+				{
+					y:= *(phrase**&lcase) + *(phrase**&lcase) -1
+					if (y = *phrase | (y = 1 & *phrase <= 3)) then write("ERROR: ",phrase) #nie mozna bardziej zredukować wyrazenia
+					else{
+						every k := y to *phrase-1 do
+						{
+							every wynik := generator(k, phrase**&lcase) do
+							{
+								#sprawdzamy czy wygenerowana wartosc jest poprawna
+								if  is_correct(wynik)=="1" then  #jezeli tak to przechodzimy do dalszych czynnosci
+								{
+									tab_ := []
+
+									ONP_phrase := ONP(wynik)
+									every v2 := gen(*(ONP_phrase**&lcase)) do
+									{
+										put(tab_, v2)
+										put(tab_, val(ONP_phrase, v2))
+									}
+									if is_equal(tab_val, tab_) == "1" then #porownujemy czy otrzymane wyniki
+									{
+										#write ("Wynik:")														# są sobie rowne
+										write(wynik)
+
+										break
+
+
+									}
+
+								}
+							}
+						}
+					}
+
+
+				}
+			}
+
+		}
+	}
+
+	end
