@@ -1,2 +1,2 @@
-# Icon-
+# Icon
 Simple programs in Icon language.
