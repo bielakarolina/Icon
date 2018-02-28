@@ -1,0 +1,46 @@
+procedure main()
+	every write(podzb("abcd"))
+end
+
+procedure perm(s) 
+	suspend if *s = 0 then "" else (y := perm(s[2:0]), i := 1 to *s, y[1:i] || s[1] || y[i:0])
+end
+
+procedure komb(s, k)
+	suspend if *s = k then s else komb(s[2:0], k) | s[1] || komb(s[2:0], k-1)
+end
+
+procedure war(s, k)
+	suspend perm(komb(s, k))
+end
+
+procedure podzb(s)
+	suspend komb(s, 0 to *s)
+end
+
+procedure gen(s, n)
+	if n = 0 then suspend []
+	else suspend [!s]|||gen(s, n-1)
+end
+
+procedure print(x)
+	case type(x) of {
+		"list": { 
+			writes("[")
+			every el := !x do { 
+				print(el) 
+				writes(" ")
+			}
+			writes("]")
+		}
+		"set": {
+			writes("<")
+			every el := !x do { 
+				print(el) 
+				writes(" ")
+			}
+			writes(">")
+		}
+		default : writes(image(x))
+	}
+end
